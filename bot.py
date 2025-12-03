@@ -12,118 +12,165 @@ from webdriver_manager.chrome import ChromeDriverManager
 # Log dosyası
 logging.basicConfig(filename="bot_log.txt", level=logging.INFO, format="%(asctime)s - %(message)s")
 
+# =============================================================
+# 🔥 BOT ADIMLARI
+# =============================================================
+STEP_LIST = [
+    "Giriş sayfasına gidiliyor",
+    "Telefon ve şifre girildi",
+    "Devam Et tıklandı",
+    "OTP doğrulandı",
+    "Gümüş kategorisine gidiliyor",
+    "Ürün sayfasına gidiliyor",
+    "Ürün sepete ekleniyor",
+    "Adres sayfasına gidiliyor",
+    "Sepet sayfasına gidiliyor",
+    "Ödeme sayfasına gidiliyor",
+    "Momento ödeme seçiliyor",
+    "Momento kodu girildi",
+    "Sözleşmeler işaretlendi",
+    "Alışveriş tamamlandı"
+]
+
+# =============================================================
+# STREAMLIT LOG PANELİNE MESAJ YAZMA FUNKSIYONU
+# =============================================================
+def streamlit_log(step_name, step_containers):
+    step_containers[step_name].markdown(f"✅ **{step_name}**")
+    logging.info(step_name)
 
 # =============================================================
 # BOT FUNKSIYONU
 # =============================================================
-def start_bot(phone, password, momento_code):
+def start_bot(phone, password, momento_code, step_containers):
     try:
-        logging.info("Başlatılıyor...")
-
         chrome_options = Options()
-        chrome_options.add_argument("--start-maximized")
-        chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--no-sandbox")
-        # chrome_options.add_argument("--headless=new")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--headless=new")
+        chrome_options.add_argument("--window-size=1920,1080")
 
         service = Service(ChromeDriverManager().install())
         driver = webdriver.Chrome(service=service, options=chrome_options)
         wait = WebDriverWait(driver, 20)
 
+        # 1) Giriş sayfası
         driver.get("https://market.staging.minted.com.tr/giris-yap")
+        streamlit_log("Giriş sayfasına gidiliyor", step_containers)
 
+        # 2) Telefon & şifre
         wait.until(EC.presence_of_element_located((By.ID, "username"))).send_keys(phone)
         wait.until(EC.presence_of_element_located((By.ID, "password"))).send_keys(password)
+        streamlit_log("Telefon ve şifre girildi", step_containers)
 
-        devam_et_buton = wait.until(EC.element_to_be_clickable((By.XPATH, "//span[contains(text(),'Devam Et')]")))
-        devam_et_buton.click()
-        logging.info("Giriş bilgileri gönderildi.")
+        # 3) Devam Et
+        devam = wait.until(EC.element_to_be_clickable((By.XPATH, "//span[contains(text(),'Devam Et')]")))
+        devam.click()
+        streamlit_log("Devam Et tıklandı", step_containers)
 
-        # OTP
+        # 4) OTP
         wait.until(EC.presence_of_element_located((By.ID, "code"))).send_keys("1")
         driver.find_element(By.ID, "code2").send_keys("2")
         driver.find_element(By.ID, "code3").send_keys("3")
         driver.find_element(By.ID, "code4").send_keys("4")
-
         driver.execute_script("""
-            let button = document.querySelector('.otp-submit-button');
-            button.removeAttribute('disabled');
-            button.classList.remove('button-disabled');
+            let btn = document.querySelector('.otp-submit-button');
+            btn.removeAttribute('disabled');
+            btn.classList.remove('button-disabled');
         """)
+        dogrula = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".otp-submit-button")))
+        dogrula.click()
+        streamlit_log("OTP doğrulandı", step_containers)
 
-        dogrula_buton = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".otp-submit-button")))
-        dogrula_buton.click()
-        logging.info("OTP doğrulandı.")
-
+        # 5) Gümüş kategorisi
         time.sleep(5)
         driver.get("https://market.staging.minted.com.tr/gumus")
-        time.sleep(5)
+        streamlit_log("Gümüş kategorisine gidiliyor", step_containers)
 
+        # 6) Ürün sayfası
+        time.sleep(5)
         driver.get("https://market.staging.minted.com.tr/minted-50-gr-gumus")
-        time.sleep(5)
+        streamlit_log("Ürün sayfasına gidiliyor", step_containers)
 
-        sepete_ekle_buton = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "cartbutton-add-basket")))
-        sepete_ekle_buton.click()
-        logging.info("Ürün sepete eklendi.")
-        time.sleep(5)
+        # 7) Sepete ekle
+        sepete_ekle = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "cartbutton-add-basket")))
+        sepete_ekle.click()
+        streamlit_log("Ürün sepete ekleniyor", step_containers)
 
+        # 8) Adres sayfası
+        time.sleep(5)
         driver.get("https://market.staging.minted.com.tr/adres")
-        time.sleep(10)
+        streamlit_log("Adres sayfasına gidiliyor", step_containers)
 
+        # 9) Sepet sayfası
+        time.sleep(5)
         driver.get("https://market.staging.minted.com.tr/sepet")
-        time.sleep(5)
+        streamlit_log("Sepet sayfasına gidiliyor", step_containers)
 
+        # 10) Ödeme sayfası
+        time.sleep(5)
         driver.get("https://market.staging.minted.com.tr/odeme")
-        time.sleep(5)
+        streamlit_log("Ödeme sayfasına gidiliyor", step_containers)
 
-        # Momento seçimi
+        # 11) Momento ödeme
         momento_button = wait.until(
             EC.element_to_be_clickable((By.XPATH, "//button[.//img[contains(@src, 'momento-logo')]]"))
         )
         momento_button.click()
-        logging.info("Momento ile Öde seçildi.")
+        streamlit_log("Momento ödeme seçiliyor", step_containers)
 
+        # 12) Momento kodu
         time.sleep(5)
         kod_input = wait.until(EC.presence_of_element_located((By.ID, "momentoNumber")))
         kod_input.send_keys(momento_code)
+        streamlit_log("Momento kodu girildi", step_containers)
 
-        # sözleşmeler
+        # 13) Sözleşmeler
         for checkbox_id in ["_contract", "_contract2"]:
             checkbox = wait.until(EC.presence_of_element_located((By.ID, checkbox_id)))
-            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", checkbox)
             driver.execute_script("arguments[0].click();", checkbox)
+        streamlit_log("Sözleşmeler işaretlendi", step_containers)
 
-        complete_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//span[text()="Alışverişi Tamamla"]')))
-        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", complete_button)
-        driver.execute_script("arguments[0].click();", complete_button)
+        # 14) Alışverişi tamamla
+        complete = wait.until(EC.element_to_be_clickable((By.XPATH, '//span[text()="Alışverişi Tamamla"]')))
+        driver.execute_script("arguments[0].click();", complete)
+        streamlit_log("Alışveriş tamamlandı", step_containers)
 
         driver.quit()
         return True
 
     except Exception as e:
-        logging.error(f"Hata oluştu.Lütfen logları inceleyin: {e}")
+        logging.error(f"Hata oluştu: {e}")
+        st.error(f"❌ Hata oluştu: {e}")
         return str(e)
 
 
 # =============================================================
-# STREAMLIT UI (run() içine alındı!)
+# STREAMLIT ARAYÜZ
 # =============================================================
 def run():
     st.title("💳 Minted Staging Test")
     st.write("Staging ortamında otomatik alım işlemi yapan bot")
 
-    phone = st.text_input("Minted Uygulanasına Kayıtlı Telefon No")
-    password = st.text_input("Minted Uyguluması Kayıtlı Şifre", type="password")
-    momento = st.text_input("Momento Kodu")
+    phone = st.text_input("Telefon Numarası")
+    password = st.text_input("Şifre", type="password")
+    momento_code = st.text_input("Momento Kodu")
+
+    # Adım kutucukları (başta kırmızı ❌)
+    step_containers = {}
+    for step in STEP_LIST:
+        step_containers[step] = st.empty()
+        step_containers[step].markdown(f"❌ **{step}**")
 
     if st.button("Başlat"):
-        if not phone or not password or not momento:
-            st.error("Lütfen tüm bilgileri doldurun!")
+        if not phone or not password or not momento_code:
+            st.error("Lütfen tüm bilgileri eksiksiz girin!")
         else:
-            with st.spinner(" Çalışıyor..."):
-                result = start_bot(phone, password, momento)
+            with st.spinner("Bot çalışıyor..."):
+                result = start_bot(phone, password, momento_code, step_containers)
 
             if result is True:
-                st.success("İşlemi başarıyla tamamladı!")
+                st.success("🏁 Bot işlemi başarıyla tamamlandı!")
             else:
-                st.error(f"Hata oluştu...Lütfen logları inceleyin:\n{result}")
+                st.error("❌ Bot hata verdi. Logları inceleyin.")

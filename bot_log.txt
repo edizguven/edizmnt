@@ -7,3 +7,49 @@
 2025-12-03 09:58:58,077 - OTP doğrulandı.
 2025-12-03 09:59:16,092 - Ürün sepete eklendi.
 2025-12-03 09:59:46,131 - Momento ile Öde seçildi.
+2025-12-03 10:15:48,793 - Bot başlatılıyor...
+2025-12-03 10:15:48,794 - ====== WebDriver manager ======
+2025-12-03 10:15:49,459 - Get LATEST chromedriver version for google-chrome
+2025-12-03 10:15:49,798 - Get LATEST chromedriver version for google-chrome
+2025-12-03 10:15:50,156 - Driver [/Users/edizguven/.wdm/drivers/chromedriver/mac64/142.0.7444.175/chromedriver-mac-arm64/chromedriver] found in cache
+2025-12-03 10:16:00,351 - Giriş bilgileri gönderildi.
+2025-12-03 10:16:02,579 - OTP doğrulandı.
+2025-12-03 10:16:21,572 - Ürün sepete eklendi.
+2025-12-03 10:16:46,271 - Momento ile Öde seçildi.
+2025-12-03 10:28:15,847 - Bot başlatılıyor...
+2025-12-03 10:28:15,847 - ====== WebDriver manager ======
+2025-12-03 10:28:16,491 - Get LATEST chromedriver version for google-chrome
+2025-12-03 10:28:17,058 - Get LATEST chromedriver version for google-chrome
+2025-12-03 10:28:17,370 - Driver [/Users/edizguven/.wdm/drivers/chromedriver/mac64/142.0.7444.175/chromedriver-mac-arm64/chromedriver] found in cache
+2025-12-03 10:28:18,441 - Giriş sayfasına gidiliyor...
+2025-12-03 10:28:26,214 - Telefon ve şifre girildi.
+2025-12-03 10:28:26,282 - Devam Et tıklandı.
+2025-12-03 10:28:28,503 - OTP doğrulandı.
+2025-12-03 10:28:28,504 - Gümüş kategorisine gidiliyor...
+2025-12-03 10:28:35,156 - Ürün sayfasına gidiliyor...
+2025-12-03 10:28:42,588 - Ürün sepete ekleniyor...
+2025-12-03 10:28:48,696 - Adres sayfasına gidiliyor...
+2025-12-03 10:28:54,972 - Sepet sayfasına gidiliyor...
+2025-12-03 10:29:01,496 - Ödeme sayfasına gidiliyor...
+2025-12-03 10:29:03,968 - Momento ödeme seçiliyor...
+2025-12-03 10:29:10,925 - Momento kodu girildi.
+2025-12-03 10:29:10,963 - Sözleşmeler işaretlendi.
+2025-12-03 10:29:10,999 - Alışveriş tamamlandı!
+2025-12-03 10:32:54,024 - ====== WebDriver manager ======
+2025-12-03 10:32:54,685 - Get LATEST chromedriver version for google-chrome
+2025-12-03 10:32:55,001 - Get LATEST chromedriver version for google-chrome
+2025-12-03 10:32:55,351 - Driver [/Users/edizguven/.wdm/drivers/chromedriver/mac64/142.0.7444.175/chromedriver-mac-arm64/chromedriver] found in cache
+2025-12-03 10:32:57,472 - Giriş sayfasına gidiliyor
+2025-12-03 10:33:02,627 - Telefon ve şifre girildi
+2025-12-03 10:33:02,703 - Devam Et tıklandı
+2025-12-03 10:33:04,407 - OTP doğrulandı
+2025-12-03 10:33:14,025 - Gümüş kategorisine gidiliyor
+2025-12-03 10:33:20,690 - Ürün sayfasına gidiliyor
+2025-12-03 10:33:21,274 - Ürün sepete ekleniyor
+2025-12-03 10:33:27,635 - Adres sayfasına gidiliyor
+2025-12-03 10:33:34,018 - Sepet sayfasına gidiliyor
+2025-12-03 10:33:41,214 - Ödeme sayfasına gidiliyor
+2025-12-03 10:33:43,367 - Momento ödeme seçiliyor
+2025-12-03 10:33:48,564 - Momento kodu girildi
+2025-12-03 10:33:48,598 - Sözleşmeler işaretlendi
+2025-12-03 10:33:48,632 - Alışveriş tamamlandı

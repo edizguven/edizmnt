@@ -3,8 +3,20 @@
         "password": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
         "role": "admin"
     },
-    "Burcu": {
-        "password": "5509d1682c8d43fc1de939fcc1e0d94d89112ede82062bdb817e29bc2fee949e",
+    "burcu@minted.com.tr": {
+        "password": "58e8c16389141c28ebf7007efb069377b2f4d8894a858ac32b69f67783b5c66d",
+        "role": "user"
+    },
+    "cagatay@minted.com.tr": {
+        "password": "58e8c16389141c28ebf7007efb069377b2f4d8894a858ac32b69f67783b5c66d",
+        "role": "user"
+    },
+    "ediz@minted.com.tr": {
+        "password": "58e8c16389141c28ebf7007efb069377b2f4d8894a858ac32b69f67783b5c66d",
+        "role": "user"
+    },
+    "ipek@minted.com.tr": {
+        "password": "58e8c16389141c28ebf7007efb069377b2f4d8894a858ac32b69f67783b5c66d",
         "role": "user"
     }
 }
