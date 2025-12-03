@@ -5,8 +5,8 @@ opencv-python
 pillow
 pytesseract
 openpyxl
-selenium
-webdriver-manager
+##selenium
+##webdriver-manager
 
 
 #https://indexpy-bx48m9fcvqpmvqq49s6z9g.streamlit.app
