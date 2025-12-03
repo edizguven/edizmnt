@@ -8,6 +8,8 @@ import importlib
 # =========================================================
 # Kullanıcı Yönetimi – JSON Dosyası
 # =========================================================
+#https://indexpy-bx48m9fcvqpmvqq49s6z9g.streamlit.app
+#https://indexpy-bx48m9fcvqpmvqq49s6z9g.streamlit.app
 
 USERS_FILE = Path("users.json")
 
@@ -125,6 +127,7 @@ def main_panel():
             "Fraud Kontrol",
             "DB Merge",
             "OCR Dekont Okuma",
+            "Staging Momento Test",
             "Kullanıcı Yönetimi",
             "Çıkış"
         ]
@@ -138,6 +141,9 @@ def main_panel():
 
     elif menu == "OCR Dekont Okuma":
         call_module("ocr")
+
+    elif menu == "Staging Momento Test":
+        call_module("bot")
 
     elif menu == "Kullanıcı Yönetimi":
         user_management()
