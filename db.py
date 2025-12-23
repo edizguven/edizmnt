@@ -30,6 +30,7 @@ STANDARD_COLUMNS = [
     "partner_mc", "invoice", "receipt", "spot_price", "unit_price", "margin", "sku", "qty"
 ]
 
+
 # ----------------------------------------------------------------------
 # ⚙️ YARDIMCI FONKSİYONLAR
 # ----------------------------------------------------------------------
@@ -149,13 +150,31 @@ def run():
         st.dataframe(merged_df, use_container_width=True)
 
         st.subheader("📈 Özet Bilgiler")
-        total_purchase = merged_df["total_price"].sum()
+
+        # --- GÜNCELLENEN KISIM BAŞLANGIÇ ---
+        # 1. Alış ve Satışları process_type sütununa göre ayırıp topluyoruz
+        total_purchase_val = merged_df[merged_df["process_type"] == "Alış"]["total_price"].sum()
+        total_sales_val = merged_df[merged_df["process_type"] == "Satış"]["total_price"].sum()
+
+        # 2. Farkı hesaplıyoruz (Satış - Alış)
+        diff_val = total_sales_val - total_purchase_val
+
+        # 3. Diğer genel toplamlar (Miktar ve Margin genel kalmaya devam ediyor)
         total_amount = merged_df["amount"].sum()
         avg_margin = merged_df["margin"].mean()
 
-        st.metric(label="Toplam Alış Tutarı", value=f"{total_purchase:,.2f} TL")
+        # 4. Ekrana Yazdırma (Mevcut yapıyı bozmadan yeni metrikleri ekledik)
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric(label="Toplam Alış Tutarı", value=f"{total_purchase_val:,.2f} TL")
+        with col2:
+            st.metric(label="Toplam Satış Tutarı", value=f"{total_sales_val:,.2f} TL")
+        with col3:
+            st.metric(label="Fark (Satış - Alış)", value=f"{diff_val:,.2f} TL", delta_color="normal")
+
         st.metric(label="Toplam Ürün Miktarı", value=f"{total_amount:,.0f} Adet")
         st.metric(label="Ortalama Margin", value=f"%{avg_margin:,.2f}")
+        # --- GÜNCELLENEN KISIM BİTİŞ ---
 
         # =========================================================================
         # 1. PARTNER ANALİZİ
