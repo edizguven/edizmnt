@@ -10,21 +10,44 @@ from fpdf import FPDF
 import tempfile
 
 # ----------------------------------------------------------------------
-# 📚 SABİT TANIMLAMALAR
+# 📚 GELİŞMİŞ EŞLEŞTİRME LİSTELERİ (STABİLİTE İÇİN)
 # ----------------------------------------------------------------------
 
-TR_COLUMN_MAPPING = {
-    "id": "order_id", "customer_id": "customer_id", "order_id": "order_id", "name-surname": "customer_name",
-    "currency": "currency", "amount": "amount", "total": "total_price", "status": "status",
-    "dekont": "invoice", "create_date": "order_date", "payment_method": "payment_method",
-    "provider_name": "partner_mc", "order_type": "process_type", "spot_price": "spot_price",
-    "unit_price": "unit_price", "margin": "margin", "product_name": "product_name", "sku": "sku", "qty": "qty"
+ADVANCED_MAPPING = {
+    "order_id": ["id", "order_id", "siparis_no", "order id", "işlem no", "fis_no", "ID"],
+    "customer_id": ["customer_id", "musteri_id", "cari_kodu", "user_id"],
+    "customer_name": ["name-surname", "customer", "customer_name", "müşteri", "ad soyad", "cari adi", "name",
+                      "firstname", "lastname", "Customer"],
+    "product_name": ["product_name", "product", "ürün", "urun adi", "malzeme", "Product"],
+    "amount": ["amount", "miktar", "adet", "qty", "quantity", "original_price", "Amount"],
+    "total_price": ["total", "total_price", "toplam", "tutar", "genel toplam", "fiyat", "bedel", "subtotal",
+                    "grand_total", "Total"],
+    "currency": ["currency", "döviz", "kur", "para birimi"],
+    "status": ["status", "durum", "statu"],
+    "order_date": ["create_date", "created_at", "order_date", "tarih", "sipariş tarihi", "işlem tarihi", "date",
+                   "Order Date"],
+    "payment_method": ["payment_method", "payment_type", "ödeme tipi", "ödeme yöntemi", "odeme sekli", "Payment Type"],
+    "partner_mc": ["provider_name", "partner", "partner_mc", "tedarikçi", "iş ortağı", "Partner"],
+    "process_type": ["order_type", "islem_tipi", "tür"],
+    "margin": ["margin", "comission", "kar", "marj", "komisyon"],
+    "sku": ["sku", "stok kodu", "barkod"],
+    "unit_price": ["unit_price", "birim fiyat", "fiyat"]
 }
 
-MC_COLUMN_MAPPING = {
-    "id": "order_id", "customer": "customer_name", "partner": "partner_mc", "product": "product_name",
-    "amount": "amount", "total": "total_price", "comission": "margin", "payment_type": "payment_method",
-    "invoice": "invoice", "receipt": "receipt", "status": "status", "order_date": "order_date"
+# 🆕 YENİ EKLENEN: ÖDEME YÖNTEMİ EŞLEŞTİRME HARİTASI
+PAYMENT_MAPPING = {
+    "Kredi Kartı": ["credit-card", "mpaycreditcard", "credit card", "cc", "kredi kartı", "bonus", "world", "card",
+                    "visa", "mastercard","Mpaypaywall","MpayPaywall"],
+    "Havale/EFT": ["wire", "havale", "eft", "bank transfer", "banka"],
+    "Vodafone": ["MpayVodafone"],
+    "Cüzdan": ["wallet", "cüzdan", "bakiye", "balance","cash"],
+    "Diğer": ["other", "diger"],
+    "Momento": ["MpayMomento"],
+    "MoneyPay": ["Mpaymoneypay", "MpayMoneyPay"],
+    "MultiGift": ["MpayMultigift", "Mpaymultigift"],
+    "MultiNet": ["Mpaymultinet", "MpayMultinet"],
+    "TokenFlex": ["MpayTokenflex", "MpayTokenFlex"],
+    "Parçalı Ödeme": ["Partialpayment"]
 }
 
 STANDARD_COLUMNS = [
@@ -39,10 +62,12 @@ STANDARD_COLUMNS = [
 # ----------------------------------------------------------------------
 
 def _clean_column_names(columns):
-    return [c.strip().lower().replace(" ", "_").replace("-", "_") for c in columns]
+    """Excel başlıklarını temizler: Boşlukları siler, küçültür."""
+    return [str(c).strip().lower().replace(" ", "_").replace("-", "_").replace(".", "") for c in columns]
 
 
 def _clean_numeric_column(series):
+    """Sayısal verileri temizler (TL, virgül, nokta karmaşasını çözer)."""
     s = series.astype(str)
     s = s.str.replace(r"[^0-9,.\-]", "", regex=True)
     tr_format = s.str.contains(r"\.\d{3},\d{2}$")
@@ -54,30 +79,53 @@ def _clean_numeric_column(series):
     return pd.to_numeric(s, errors="coerce").fillna(0)
 
 
-def normalize_dataframe(df, mapping, source, process_type):
-    df.columns = _clean_column_names(df.columns)
+def normalize_dataframe(df, mapping_config, source, process_type):
+    """
+    Excel verisini alır, akıllı eşleştirme ile standart hale getirir.
+    """
+    # 1. Excel başlıklarını temizle (Örn: "Order Date " -> "order_date")
+    clean_headers = _clean_column_names(df.columns)
+    df.columns = clean_headers
+
     rename_dict = {}
-    for k, v in mapping.items():
-        key = _clean_column_names([k])[0]
-        if key in df.columns:
-            rename_dict[key] = v
+
+    # 2. Akıllı Eşleştirme Döngüsü
+    # Standart sütunları tek tek geziyoruz (Örn: 'order_date')
+    for standard_col, aliases in mapping_config.items():
+        # Bu standart sütun için olası takma adları (alias) geziyoruz
+        for alias in aliases:
+            # Alias'ı da temizliyoruz ki eşleşme garanti olsun
+            clean_alias = alias.strip().lower().replace(" ", "_").replace("-", "_")
+
+            # Eğer temizlenmiş alias, Excel'in başlıklarında varsa EŞLEŞTİ!
+            if clean_alias in df.columns:
+                rename_dict[clean_alias] = standard_col
+                break  # Bir tane bulduk yeter, diğer aliaslara bakmaya gerek yok
+
+    # 3. İsimleri Değiştir
     df = df.rename(columns=rename_dict)
+
+    # 4. Çift sütunları engelle
     df = df.loc[:, ~df.columns.duplicated()]
 
-
+    # 5. Eksik kalan standart sütunları doldur ve veriyi işle
     df["source"] = source
     df["process_type"] = process_type
+
     if "partner_mc" not in df.columns or source == "TR":
         df["partner_mc"] = "TR"
 
+    # Sayısal Temizlik
     for col in ["amount", "total_price", "margin"]:
         if col in df.columns:
             df[col] = _clean_numeric_column(df[col])
 
+    # Olmayan standart sütunları boş (NA) olarak ekle
     for col in STANDARD_COLUMNS:
         if col not in df.columns:
             df[col] = pd.NA
 
+    # Sütun sırasını standartlaştır
     df = df[[col for col in STANDARD_COLUMNS if col in df.columns]]
     return df
 
@@ -90,6 +138,27 @@ def clean_merged_ids(df):
         df.loc[df["source"] == "TR", "customer_id"] = df.loc[df["source"] == "TR", "customer_id"].astype(
             str).str.replace(r"[.,]", "", regex=True)
     return df
+
+
+# 🆕 YENİ EKLENEN: Ödeme Yöntemi Standartlaştırma Fonksiyonu
+def standardize_payment_method(value, mapping_dict):
+    if pd.isna(value) or str(value).strip() == "":
+        return "Belirsiz"
+
+    # Gelen veriyi temizle (küçük harf, boşluksuz)
+    val_clean = str(value).strip().lower().replace(" ", "").replace("-", "")
+
+    for standard_name, aliases in mapping_dict.items():
+        for alias in aliases:
+            # Listemizdeki alias'ı da temizle
+            alias_clean = alias.strip().lower().replace(" ", "").replace("-", "")
+
+            # Tam eşleşme veya kapsama kontrolü (Örn: 'mpaycreditcard' içinde 'creditcard' var mı?)
+            if alias_clean == val_clean or (len(alias_clean) > 3 and alias_clean in val_clean):
+                return standard_name
+
+    # Hiçbir şeye uymuyorsa olduğu gibi (Baş harfi büyük) döndür
+    return str(value).title()
 
 
 # PDF için Türkçe Karakter Temizleyici
@@ -147,11 +216,10 @@ def create_pdf_report(summary_data, figures_list):
 # ----------------------------------------------------------------------
 
 def run():
-    # Sayfa Başlığı ve İkonu (GÜNCELLENDİ)
     st.set_page_config(page_title="DB Merge", page_icon="🗂️", layout="centered")
     st.title("🗂️ DB Merge – Dosya Birleştirme ve Raporlama")
 
-    # --- Dosyaları Yükle (GÜNCELLENDİ: Buy/Sell İsimlendirmesi) ---
+    # --- Dosyaları Yükle ---
     st.header("📥 Dosyaları Yükle")
 
     tr_purchase_file = st.file_uploader("TR Buy", type=["xlsx"], key="tr_purchase")
@@ -160,21 +228,27 @@ def run():
     mc_sales_file = st.file_uploader("MC Sell", type=["xlsx"], key="mc_sales")
 
     dataframes = []
-    # (GÜNCELLENDİ: process_type artık "Buy" ve "Sell" olarak işleniyor)
+
+    # NOT: Artık tek bir "ADVANCED_MAPPING" kullanıyoruz.
+    # Kod akıllı olduğu için hangi sütunu görürse onu alacak.
     if tr_purchase_file: dataframes.append(
-        normalize_dataframe(pd.read_excel(tr_purchase_file, engine="openpyxl"), TR_COLUMN_MAPPING, "TR", "Buy"))
+        normalize_dataframe(pd.read_excel(tr_purchase_file, engine="openpyxl"), ADVANCED_MAPPING, "TR", "Buy"))
     if mc_purchase_file: dataframes.append(
-        normalize_dataframe(pd.read_excel(mc_purchase_file, engine="openpyxl"), MC_COLUMN_MAPPING, "MC", "Buy"))
+        normalize_dataframe(pd.read_excel(mc_purchase_file, engine="openpyxl"), ADVANCED_MAPPING, "MC", "Buy"))
     if tr_sales_file: dataframes.append(
-        normalize_dataframe(pd.read_excel(tr_sales_file, engine="openpyxl"), TR_COLUMN_MAPPING, "TR", "Sell"))
+        normalize_dataframe(pd.read_excel(tr_sales_file, engine="openpyxl"), ADVANCED_MAPPING, "TR", "Sell"))
     if mc_sales_file: dataframes.append(
-        normalize_dataframe(pd.read_excel(mc_sales_file, engine="openpyxl"), MC_COLUMN_MAPPING, "MC", "Sell"))
+        normalize_dataframe(pd.read_excel(mc_sales_file, engine="openpyxl"), ADVANCED_MAPPING, "MC", "Sell"))
 
     if dataframes:
         merged_df = pd.concat(dataframes, ignore_index=True)
         merged_df = clean_merged_ids(merged_df)
+
+        # 🆕 YENİ EKLENEN: ÖDEME YÖNTEMİ STANDARTLAŞTIRMA MANTIĞI
         if "payment_method" in merged_df.columns:
-            merged_df["payment_method"] = merged_df["payment_method"].astype(str).str.strip().str.lower()
+            merged_df["payment_method"] = merged_df["payment_method"].apply(
+                lambda x: standardize_payment_method(x, PAYMENT_MAPPING)
+            )
 
         merged_df = merged_df.assign(
             product_currency=lambda df: df["product_name"].astype(str) + " / " + df["currency"].astype(str))
@@ -220,21 +294,20 @@ def run():
         # --- ÖZET BİLGİLER ---
         st.subheader("📈 Özet Bilgiler")
 
-        # Temel Hesaplamalar (GÜNCELLENDİ: Buy/Sell sorguları)
         total_purchase_val = merged_df[merged_df["process_type"] == "Buy"]["total_price"].sum()
         total_sales_val = merged_df[merged_df["process_type"] == "Sell"]["total_price"].sum()
         diff_val = total_sales_val - total_purchase_val
         total_amount = merged_df["amount"].sum()
         avg_margin = merged_df["margin"].mean()
 
-        # AOV ve ORTALAMA (GÜNCELLENDİ: Buy/Sell)
+        # AOV Hesabı
         sales_txn_count = len(merged_df[merged_df["process_type"] == "Sell"])
         aov_sales = total_sales_val / sales_txn_count if sales_txn_count > 0 else 0
 
         purchase_txn_count = len(merged_df[merged_df["process_type"] == "Buy"])
         aov_purchase = total_purchase_val / purchase_txn_count if purchase_txn_count > 0 else 0
 
-        # Satır 1: Finansal Toplamlar (GÜNCELLENDİ: Etiketler)
+        # Satır 1
         col1, col2, col3 = st.columns(3)
         with col1:
             st.metric(label="Toplam Buy Tutarı", value=f"{total_purchase_val:,.2f} TL")
@@ -243,7 +316,7 @@ def run():
         with col3:
             st.metric(label="Fark (Sell - Buy)", value=f"{diff_val:,.2f} TL", delta_color="normal")
 
-        # Satır 2: Oranlar ve Ortalamalar
+        # Satır 2
         col4, col5, col6, col7 = st.columns(4)
         with col4:
             st.metric(label="Toplam Ürün Miktarı", value=f"{total_amount:,.0f} Adet")
@@ -254,7 +327,7 @@ def run():
         with col7:
             st.metric(label="Ort. İşlem (Buy)", value=f"{aov_purchase:,.2f} TL")
 
-        # PDF ÖZET (GÜNCELLENDİ)
+        # PDF Özet
         pdf_summary = {
             "Toplam Buy": f"{total_purchase_val:,.2f} TL",
             "Toplam Sell": f"{total_sales_val:,.2f} TL",
@@ -268,7 +341,7 @@ def run():
         pdf_figures = []
 
         # =========================================================================
-        # 1. ZAMAN SERİSİ GRAFİĞİ (GÜNCELLENDİ: Buy/Sell)
+        # 1. ZAMAN SERİSİ GRAFİĞİ
         # =========================================================================
         st.markdown("---")
         st.subheader("📈 Zaman İçindeki İşlem Trendi (Buy vs Sell)")
@@ -304,7 +377,7 @@ def run():
             st.warning("Grafik için veri yok.")
 
         # =========================================================================
-        # 1.5 HAFTANIN GÜNLERİ ANALİZİ (GÜNCELLENDİ: Buy/Sell)
+        # 1.5 HAFTANIN GÜNLERİ ANALİZİ
         # =========================================================================
         st.subheader("📅 Haftanın Günleri Analizi (Buy vs Sell)")
 
@@ -321,7 +394,6 @@ def run():
             pivot_dow = analysis_df.groupby(["day_of_week", "process_type"])["total_price"].sum().unstack(fill_value=0)
             pivot_dow.index = pivot_dow.index.map(day_map)
 
-            # (ÖNEMLİ: Artık Alış/Satış yerine Buy/Sell sütunlarını kontrol ediyoruz)
             if "Buy" not in pivot_dow.columns: pivot_dow["Buy"] = 0
             if "Sell" not in pivot_dow.columns: pivot_dow["Sell"] = 0
 
@@ -545,9 +617,9 @@ def run():
                         mime="application/pdf"
                     )
 
-
+    # --- FOOTER (YENİ EKLENEN İMZA) ---
     st.markdown("---")
-    st.markdown("<div style='text-align: center; color: grey; font-size: 12px;'>Created by E.Güven</div>",
+    st.markdown("<div style='text-align: center; color: grey; font-size: 12px;'>Created by EG</div>",
                 unsafe_allow_html=True)
 
 
